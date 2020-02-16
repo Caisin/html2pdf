@@ -6,7 +6,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from caisin.Crawler import Crawler, html_template
+from caisin.Crawler import Crawler, html_template, options
 from caisin.Render import Render
 
 
@@ -18,6 +18,7 @@ class OnJava8Crawler(Crawler):
     def __init__(self, name, start_url, out_path, del_html=False):
         super().__init__(name, start_url, out_path, del_html)
         self.render = Render()
+        self.head = ''
 
     def request(self, url, **kwargs):
         print(url)
@@ -30,11 +31,12 @@ class OnJava8Crawler(Crawler):
         :return: url生成器
         """
         soup = BeautifulSoup(response, "html.parser")
+        self.head = soup.find("head")
         menu_tag = soup.find("div", class_="sidebar-nav")
         for li in menu_tag.find_all("li"):
             url = li.find_all("a")[1].get("href")
             if not url.startswith("http"):
-                url = "/".join([self.domain+'/onjava8', url])  # 补全为全路径
+                url = "/".join([self.domain + '/onjava8', url])  # 补全为全路径
             yield url
 
     def parse_body(self, response):
@@ -70,7 +72,7 @@ class OnJava8Crawler(Crawler):
                     return "".join([m.group(1), m.group(2), m.group(3)])
 
             html = re.compile(pattern).sub(func, html)
-            html = html_template.format(content=html)
+            html = html_template.format(content=html, head=self.head)
             html = html.encode("utf-8")
             return html
         except Exception as e:
@@ -78,10 +80,20 @@ class OnJava8Crawler(Crawler):
 
 
 if __name__ == '__main__':
+    html_template = """
+<!DOCTYPE html>
+<html lang="en">
+{head}
+<body style="font-size: xx-large;padding:50px 10px">
+{content}
+</body>
+</html>
+"""
     out_path = "E:/code/Python/html2pdf/out"
     urls = {
         'java编程思想第五版': 'https://lingcoder.gitee.io/onjava8/#/sidebar',
     }
     for item in urls:
         crawler = OnJava8Crawler(item, urls[item], out_path)
-        crawler.run()
+        # crawler.run()
+        crawler.html_to_pdf()

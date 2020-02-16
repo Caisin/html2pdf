@@ -30,10 +30,10 @@ headers = {
 
 options = {
     'page-size': 'Letter',
-    'margin-top': '0.25in',
-    'margin-right': '0.25in',
-    'margin-bottom': '0.25in',
-    'margin-left': '0.25in',
+    'margin-top': '0in',
+    'margin-right': '0in',
+    'margin-bottom': '0in',
+    'margin-left': '0in',
     'encoding': "UTF-8",
     'custom-header': [
         ('Accept-Encoding', 'gzip')
@@ -62,7 +62,9 @@ class Crawler(object):
         self.name = name
         self.out_path = out_path
         self.start_url = start_url
-        self.domain = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(self.start_url))
+        uri = urlparse(self.start_url)
+        self.path = uri.path
+        self.domain = '{uri.scheme}://{uri.netloc}'.format(uri=uri)
 
     @staticmethod
     def request(url, **kwargs):

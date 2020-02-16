@@ -34,7 +34,7 @@ class GitBookCrawler(Crawler):
         for a in menu_tag.find_all("a"):
             url = a.get("href")
             if not url.startswith("http"):
-                url = "/".join([self.domain + '/gitbook', url])  # 补全为全路径
+                url = "/".join([self.domain, self.path, url])  # 补全为全路径
             yield url
 
     def parse_body(self, response):
@@ -46,7 +46,7 @@ class GitBookCrawler(Crawler):
         try:
             # print(response)
             soup = BeautifulSoup(response, 'html.parser')
-            body = soup.find("div", class_="page-inner")
+            body = soup.find("section", class_="normal markdown-section")
             # 加入标题, 居中显示
             # try:
             #     title = body.find('h1').get_id()
@@ -64,13 +64,13 @@ class GitBookCrawler(Crawler):
 
             def func(m):
                 if not m.group(2).startswith("http"):
-                    rtn = "".join([m.group(1), self.domain, '/gitbook/', m.group(2), m.group(3)])
+                    rtn = "".join([m.group(1), self.domain, self.path, '/', m.group(2), m.group(3)])
                     return rtn.replace("../", "")
                 else:
                     return "".join([m.group(1), m.group(2), m.group(3)])
 
             html = re.compile(pattern).sub(func, html)
-            html = html_template.format(content=html)
+            html = html_template.format(content=html, start_url=self.start_url)
             html = html.encode("utf-8")
             return html
         except Exception as e:
@@ -78,39 +78,38 @@ class GitBookCrawler(Crawler):
 
 
 if __name__ == '__main__':
-    out_path = "E:/code/Python/html2pdf/out"
-    urls = {
-        'Go语言圣经（中文版）': 'http://localhost/gitbook/',
-    }
     html_template = """
 <!DOCTYPE HTML>
 <html lang="zh-hans" >
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Go语言起源 · Go语言圣经</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
-        <meta name="generator" content="GitBook 3.2.3">
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="http://localhost/gitbook/gitbook/style.css">
-    <link rel="stylesheet" href="http://localhost/gitbook/gitbook/gitbook-plugin-katex/katex.min.css">
-    <link rel="stylesheet" href="http://localhost/gitbook/gitbook/gitbook-plugin-highlight/website.css">
-    <link rel="stylesheet" href="http://localhost/gitbook/gitbook/gitbook-plugin-fontsettings/website.css">
-     <meta name="HandheldFriendly" content="true"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="http://localhost/gitbook/gitbook/images/apple-touch-icon-precomposed-152.png">
-    <link rel="shortcut icon" href="http://localhost/gitbook/gitbook/images/favicon.ico" type="image/x-icon">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="{start_url}/gitbook/style.css">
+        <link rel="stylesheet" href="{start_url}/gitbook/gitbook-plugin-katex/katex.min.css">
+        <link rel="stylesheet" href="{start_url}/gitbook/gitbook-plugin-highlight/website.css">
+        <link rel="stylesheet" href="{start_url}/gitbook/gitbook-plugin-fontsettings/website.css">
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="{start_url}/gitbook/images/apple-touch-icon-precomposed-152.png">
+        <link rel="shortcut icon" href="{start_url}/gitbook/images/favicon.ico" type="image/x-icon">
 </head>
-<body style="font-size: xx-large">
+<body style="font-size: xx-large;padding:50px 10px">
 {content}
 </body>
 </html>
 """
+    out_path = "E:/code/Python/html2pdf/out"
+    urls = {
+        'Go语言圣经（中文版）': 'http://localhost/gitbook',
+        'Go语言高级编程': 'https://chai2010.cn/advanced-go-programming-book',
+        'Go2编程指南': 'https://chai2010.cn/go2-book/',
+    }
     for item in urls:
         crawler = GitBookCrawler(item, urls[item], out_path)
-        crawler.run()
-        # crawler.html_to_pdf()
-
+        # crawler.run()
+        crawler.html_to_pdf()
