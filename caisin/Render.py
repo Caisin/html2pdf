@@ -16,9 +16,8 @@ class Render:
     def get_html(self, url):
         self.driver.get(url)
         sleep(1)
-        source = self.driver.page_source
-        self.driver.close()
-        return source
+        return self.driver.page_source
+
 
     def __del__(self):
         # self.driver.quit()

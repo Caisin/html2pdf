@@ -4,10 +4,9 @@ from __future__ import unicode_literals
 
 import logging
 import os
-
 import time
-
 from urllib.parse import urlparse
+import asyncio
 
 import pdfkit
 import requests
@@ -18,7 +17,7 @@ html_template = """
 <head>
     <meta charset="UTF-8">
 </head>
-<body>
+<body style="font-size: xx-large">
 {content}
 </body>
 </html>
@@ -31,10 +30,10 @@ headers = {
 
 options = {
     'page-size': 'Letter',
-    'margin-top': '0.75in',
-    'margin-right': '0.75in',
-    'margin-bottom': '0.75in',
-    'margin-left': '0.75in',
+    'margin-top': '0.25in',
+    'margin-right': '0.25in',
+    'margin-bottom': '0.25in',
+    'margin-left': '0.25in',
     'encoding': "UTF-8",
     'custom-header': [
         ('Accept-Encoding', 'gzip')
@@ -90,25 +89,49 @@ class Crawler(object):
 
     def run(self):
         start = time.time()
-        items = []
         out_dir = "/".join([self.out_path, self.name])
         html_path = "/".join([out_dir, "html"])
         if not os.path.exists(html_path):
             os.makedirs(html_path)
-        for index, url in enumerate(self.parse_menu(self.request(self.start_url))):
-            html = self.parse_body(self.request(url))
-            f_name = "/".join([html_path, str(index) + ".html"])
-            with open(f_name, 'wb') as f:
-                f.write(html)
-                f.flush()
-            items.append(f_name)
 
+        loop = asyncio.get_event_loop()
+        tasks = [self.body_to_file(html_path, index, url)
+                 for index, url in enumerate(self.parse_menu(self.request(self.start_url)))]
+        # # 异步执行任务
+        result = loop.run_until_complete(asyncio.wait(tasks))
+        print(result)
+        loop.close()
+        # html转pdf
+        self.html_to_pdf()
+        total_time = time.time() - start
+        print(u"总共耗时：%f 秒" % total_time)
+
+    # 将内容保存为本地文件
+    @asyncio.coroutine
+    def body_to_file(self, html_path, index, url):
+        html = self.parse_body(self.request(url))
+        f_name = "/".join([html_path, str(index).zfill(5) + ".html"])
+        with open(f_name, 'wb') as f:
+            f.write(html)
+            f.flush()
+
+    def html_to_pdf(self):
+        out_dir = "/".join([self.out_path, self.name])
+        html_path = "/".join([out_dir, "html"])
+        html_files = os.listdir(html_path)
+        htmls = ["/".join([html_path, i]) for i in html_files]
         try:
-            pdfkit.from_file(items, out_dir + "/" + self.name + ".pdf", options=options)
+            pdfkit.from_file(htmls, out_dir + "/" + self.name + ".pdf", options=options)
         except:
             logging.error("转PDF错误!", exc_info=True)
         if self.del_html:
-            for html in items:
+            for html in htmls:
                 os.remove(html)
-        total_time = time.time() - start
-        print(u"总共耗时：%f 秒" % total_time)
+
+
+
+if __name__ == '__main__':
+    items = ['E:/AsiaInfo/CMpak/code/acctmanm/amsbase-frontend/src/main/resources/tapestry/ams/receipt/Receipt.html']
+    pdfkit.from_file(items,
+                     "E:/AsiaInfo/CMpak/code/acctmanm/amsbase-frontend/src/main/resources/tapestry/ams/receipt/Receipt.pdf",
+                     options=options)
