@@ -97,6 +97,12 @@ if __name__ == '__main__':
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
         <link rel="apple-touch-icon-precomposed" sizes="152x152" href="{start_url}/gitbook/images/apple-touch-icon-precomposed-152.png">
         <link rel="shortcut icon" href="{start_url}/gitbook/images/favicon.ico" type="image/x-icon">
+        <style>
+            .markdown-section pre>code {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+        </style>
 </head>
 <body style="font-size: xx-large;padding:50px 10px">
 {content}
@@ -106,8 +112,9 @@ if __name__ == '__main__':
     out_path = "E:/code/Python/html2pdf/out"
     urls = {
         'Go语言圣经（中文版）': 'http://localhost/gitbook',
-        'Go语言高级编程': 'https://chai2010.cn/advanced-go-programming-book',
-        'Go2编程指南': 'https://chai2010.cn/go2-book/',
+        # 'Go语言高级编程': 'https://chai2010.cn/advanced-go-programming-book',
+        # 'Go2编程指南': 'https://chai2010.cn/go2-book',
+        # 'golang': 'https://book.eddycjy.com/golang',
     }
     for item in urls:
         crawler = GitBookCrawler(item, urls[item], out_path)
