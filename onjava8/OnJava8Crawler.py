@@ -6,7 +6,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from caisin.Crawler import Crawler, html_template, options
+from caisin.Crawler import Crawler, html_template
 from caisin.Render import Render
 
 
